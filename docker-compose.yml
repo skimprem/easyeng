@@ -21,7 +21,7 @@ services:
     environment:
       DATABASE_URL: postgres://easyeng:${POSTGRES_PASSWORD}@db:5432/easyeng
     ports:
-      - "${EASYENG_PORT:-8000}:8000"
+      - "127.0.0.1:${EASYENG_PORT:-8000}:8000"
     volumes:
       - appdata:/data   # кэш онлайн-словарей и загрузки
     depends_on:
