@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Библиотека{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Моя библиотека</h1>
+  <form class="search" method="get"><input type="search" name="q" value="{{ q }}" placeholder="Поиск по названию или автору"></form>
+</div>
+
+{% if texts %}
+<ul class="shelf">
+  {% for t in texts %}
+  <li class="book">
+    <a class="book-main" href="{% url 'library:read' t.pk %}">
+      <span class="book-title">{{ t.title }}</span>
+      {% if t.author %}<span class="book-author">{{ t.author }}</span>{% endif %}
+      <span class="book-meta">
+        <span class="lang">{{ t.language|upper }}</span>
+        {{ t.get_source_display }}
+        {% if t.last_read %}· читали {{ t.last_read|timesince }} назад{% endif %}
+      </span>
+      <span class="progress" title="Прочитано {% widthratio t.progress 1 100 %}%"><span style="width: {% widthratio t.progress 1 100 %}%"></span></span>
+    </a>
+    <details class="menu menu-right book-actions">
+      <summary aria-label="Действия">⋯</summary>
+      <div class="menu-body">
+        <a href="{% url 'library:edit' t.pk %}">Редактировать</a>
+        <a href="{% url 'library:share' t.pk %}">Отправить другу</a>
+        <form method="post" action="{% url 'library:delete' t.pk %}" data-confirm="Удалить «{{ t.title }}»?">{% csrf_token %}<button class="linklike danger">Удалить</button></form>
+      </div>
+    </details>
+  </li>
+  {% endfor %}
+</ul>
+{% elif q %}
+<p class="muted">Ничего не найдено.</p>
+{% else %}
+<div class="empty card">
+  <h2>Здесь пока пусто</h2>
+  <p>Добавьте первый текст — и читайте, переводя незнакомые слова двойным кликом.</p>
+  <div class="actions">
+    <a class="btn btn-primary" href="{% url 'library:gutenberg' %}">Найти книгу в Project Gutenberg</a>
+    <a class="btn" href="{% url 'library:upload' %}">Загрузить .txt / .md</a>
+    <a class="btn" href="{% url 'library:create' %}">Вставить текст</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Настройки{% endblock %}
+{% block main_class %}page narrow{% endblock %}
+{% block content %}
+<h1>Настройки</h1>
+<form method="post" class="settings">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="msg msg-error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+
+  <section class="card">
+    <h2>Языки</h2>
+    <div class="row-2">
+      {% for field in form %}{% if field.name == "source_lang" or field.name == "target_lang" %}
+      <div class="field{% if field.errors %} has-error{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}
+        {% for e in field.errors %}<small class="error">{{ e }}</small>{% endfor %}
+      </div>
+      {% endif %}{% endfor %}
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Словари</h2>
+    <p class="help">{{ form.providers.help_text }} Выключенные не опрашиваются. Свои словари загружаются в разделе <a href="{% url 'dictionary:list' %}">«Словари»</a>.</p>
+    <ol class="sortable" id="providers">
+      {% for key, name, description, online, checked in form.provider_items %}
+      <li class="sort-item" draggable="true">
+        <span class="handle" aria-hidden="true">⋮⋮</span>
+        <label class="sort-label">
+          <input type="checkbox" name="providers" value="{{ key }}"{% if checked %} checked{% endif %}>
+          <span><b>{{ name }}</b> {% if online %}<span class="tag-online">онлайн</span>{% endif %}<br><small class="muted">{{ description }}</small></span>
+        </label>
+        <span class="sort-buttons">
+          <button type="button" class="icon-btn" data-move="-1" title="Выше" aria-label="Выше {{ name }}">↑</button>
+          <button type="button" class="icon-btn" data-move="1" title="Ниже" aria-label="Ниже {{ name }}">↓</button>
+        </span>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>Словарик и повторение</h2>
+    {% for field in form %}{% if field.name == "auto_add_pinned" %}
+      <label class="check">{{ field }} <span>{{ field.label }}<br><small class="muted">{{ field.help_text }}</small></span></label>
+    {% elif field.name == "session_size" %}
+      <div class="field{% if field.errors %} has-error{% endif %}" style="margin-top: 1rem; max-width: 14rem">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}
+        {% for e in field.errors %}<small class="error">{{ e }}</small>{% endfor %}
+      </div>
+    {% endif %}{% endfor %}
+  </section>
+
+  <button class="btn btn-primary">Сохранить</button>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/settings.js' %}"></script>{% endblock %}

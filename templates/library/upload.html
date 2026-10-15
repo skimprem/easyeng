@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Загрузить текст{% endblock %}
+{% block main_class %}page narrow{% endblock %}
+{% block content %}
+<h1>Загрузить текст</h1>
+<div class="card">
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}
+    {% include "_form.html" %}
+    <button class="btn btn-primary">Загрузить</button>
+  </form>
+</div>
+<p class="muted">Простой текст будет аккуратно преобразован в Markdown: абзацы сохранятся, заголовки глав («CHAPTER I») станут заголовками.</p>
+{% endblock %}

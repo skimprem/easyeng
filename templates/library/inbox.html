@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Входящие{% endblock %}
+{% block main_class %}page narrow{% endblock %}
+{% block content %}
+<h1>Входящие</h1>
+<ul class="results">
+{% for s in incoming %}
+  <li class="result">
+    <div>
+      <div class="book-title">{{ s.text.title }}</div>
+      <div class="book-meta">от <b>{{ s.sender.username }}</b> · {{ s.created|timesince }} назад{% if s.status != "pending" %} · {{ s.get_status_display|lower }}{% endif %}</div>
+      {% if s.message %}<p class="note">{{ s.message }}</p>{% endif %}
+    </div>
+    {% if s.status == "pending" %}
+    <form method="post" action="{% url 'library:share_respond' s.pk %}" class="actions">{% csrf_token %}
+      <button class="btn btn-primary" name="action" value="accept">Добавить себе</button>
+      <button class="btn btn-ghost" name="action" value="decline">Отклонить</button>
+    </form>
+    {% endif %}
+  </li>
+{% empty %}<li class="muted">Пока никто ничего не прислал.</li>{% endfor %}
+</ul>
+{% if outgoing %}
+<h2>Отправленные</h2>
+<ul class="results compact">
+  {% for s in outgoing %}<li class="result"><div>{{ s.text.title }} → <b>{{ s.recipient.username }}</b> <span class="muted">· {{ s.get_status_display|lower }}</span></div></li>{% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

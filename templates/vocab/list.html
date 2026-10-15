@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Словарик{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Мой словарик</h1>
+  <div class="actions">
+    {% if stats.due %}
+      <a class="btn btn-primary" href="{% url 'vocab:review' %}">Повторить · {{ stats.due }}</a>
+    {% elif stats.total %}
+      <a class="btn" href="{% url 'vocab:review' %}?mode=practice">Проверить себя</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if stats.total %}
+<div class="stat-row">
+  <a class="stat{% if not status %} active{% endif %}" href="?"><b>{{ stats.total }}</b> всего</a>
+  <a class="stat learning{% if status == 'learning' %} active{% endif %}" href="?status=learning"><b>{{ stats.learning }}</b> учу</a>
+  <a class="stat reviewing{% if status == 'reviewing' %} active{% endif %}" href="?status=reviewing"><b>{{ stats.reviewing }}</b> повторяю</a>
+  <a class="stat mastered{% if status == 'mastered' %} active{% endif %}" href="?status=mastered"><b>{{ stats.mastered }}</b> выучено</a>
+</div>
+{% if not stats.due and stats.next_due %}<p class="muted">Всё повторено. Следующее повторение — {{ stats.next_due|date:"j E, H:i" }}.</p>{% endif %}
+
+<form class="search-row" method="get">
+  {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+  <input type="search" name="q" value="{{ q }}" placeholder="Поиск по слову или переводу">
+</form>
+
+<ul class="results vocab-list">
+  {% for c in page %}
+  <li class="result">
+    <div class="vocab-item">
+      <div><span class="vocab-word">{{ c.word }}</span>{% if c.form and c.form|lower != c.word|lower %} <span class="muted">({{ c.form }})</span>{% endif %} — {{ c.translation }}</div>
+      {% if c.context %}<div class="vocab-context">{{ c.context }}</div>{% endif %}
+      <div class="book-meta">
+        <span class="boxes" title="Уровень {{ c.box }} из {{ max_box }}">{% for i in "12345" %}<i class="{% if forloop.counter <= c.box %}on{% endif %}"></i>{% endfor %}</span>
+        <span class="tag {{ c.status }}">{{ c.status_name }}</span>
+        {% if c.text %}· <a href="{% url 'library:read' c.text_id %}">{{ c.text.title|truncatechars:40 }}</a>{% endif %}
+        {% if c.lapses %}· забывал {{ c.lapses }} раз{% endif %}
+      </div>
+    </div>
+    <details class="menu menu-right dots">
+      <summary aria-label="Действия">⋯</summary>
+      <div class="menu-body">
+        <a href="{% url 'vocab:edit' c.pk %}">Редактировать</a>
+        {% if c.box %}<form method="post" action="{% url 'vocab:relearn' c.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="linklike">Вернуть на заучивание</button></form>{% endif %}
+        <form method="post" action="{% url 'vocab:delete' c.pk %}" data-confirm="Удалить «{{ c.word }}» из словарика?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="linklike danger">Удалить</button></form>
+      </div>
+    </details>
+  </li>
+  {% empty %}<li class="muted">Ничего не найдено.</li>
+  {% endfor %}
+</ul>
+{% if page.has_other_pages %}
+<div class="pager">
+  {% if page.has_previous %}<a class="btn btn-ghost" href="?status={{ status }}&q={{ q|urlencode }}&page={{ page.previous_page_number }}">← Назад</a>{% endif %}
+  <span class="muted">{{ page.number }} / {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn btn-ghost" href="?status={{ status }}&q={{ q|urlencode }}&page={{ page.next_page_number }}">Дальше →</a>{% endif %}
+</div>
+{% endif %}
+{% else %}
+<div class="empty card">
+  <h2>Словарик пуст</h2>
+  <p>Во время чтения нажмите ☆ во всплывающем переводе или просто закрепите перевод над словом — слово попадёт сюда, вместе с предложением из текста.</p>
+</div>
+{% endif %}
+
+<details class="add-card">
+  <summary>Добавить слово вручную</summary>
+  <div class="card">
+    <form method="post" action="{% url 'vocab:create' %}">{% csrf_token %}
+      {% include "_form.html" %}
+      <button class="btn btn-primary">Добавить</button>
+    </form>
+  </div>
+</details>
+{% endblock %}

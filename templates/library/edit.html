@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{% if is_new %}Новый текст{% else %}{{ text.title }}{% endif %}{% endblock %}
+{% block main_class %}page wide{% endblock %}
+{% block content %}
+<form method="post" class="editor" id="editor" data-preview-url="{% url 'library:preview' %}">{% csrf_token %}
+  <div class="editor-meta">
+    {% if form.non_field_errors %}<div class="msg msg-error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+    <div class="field grow"><label for="{{ form.title.id_for_label }}">Название</label>{{ form.title }}{% for e in form.title.errors %}<small class="error">{{ e }}</small>{% endfor %}</div>
+    <div class="field grow"><label for="{{ form.author.id_for_label }}">Автор</label>{{ form.author }}</div>
+    <div class="field"><label for="{{ form.language.id_for_label }}">Язык</label>{{ form.language }}</div>
+  </div>
+  <div class="editor-tabs">
+    <button type="button" data-tab="write" class="active">Текст</button>
+    <button type="button" data-tab="preview">Предпросмотр</button>
+  </div>
+  <div class="editor-toolbar" role="toolbar">
+    <button type="button" data-md="heading" title="Заголовок">H</button>
+    <button type="button" data-md="bold" title="Жирный (Ctrl+B)"><b>B</b></button>
+    <button type="button" data-md="italic" title="Курсив (Ctrl+I)"><i>I</i></button>
+    <button type="button" data-md="quote" title="Цитата">❝</button>
+    <button type="button" data-md="list" title="Список">•</button>
+    <button type="button" data-md="link" title="Ссылка">🔗</button>
+    <button type="button" data-md="hr" title="Разделитель">—</button>
+    <a class="md-help" href="https://www.markdownguide.org/basic-syntax/" target="_blank" rel="noopener">Справка по Markdown</a>
+  </div>
+  <div class="editor-panes">
+    <div class="pane pane-write">{{ form.content }}</div>
+    <div class="pane pane-preview reader" id="preview"></div>
+  </div>
+  <div class="editor-footer">
+    <button class="btn btn-primary">Сохранить</button>
+    <span class="muted">Ctrl+S — сохранить</span>
+    {% if text %}<a class="btn btn-ghost" href="{% url 'library:read' text.pk %}">Отмена</a>{% endif %}
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/editor.js' %}"></script>{% endblock %}

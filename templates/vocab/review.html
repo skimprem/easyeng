@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Повторение{% endblock %}
+{% block body_class %}reviewing{% endblock %}
+{% block main_class %}review-wrap{% endblock %}
+{% block content %}
+<div class="review" id="review"
+     data-answer-url="{% url 'vocab:answer' 0 %}"
+     data-total-cards="{{ stats.total }}"
+     data-next-due="{{ stats.next_due|date:'j E, H:i' }}">
+  <div class="review-bar">
+    <a class="icon-btn" href="{% url 'vocab:list' %}" title="Закончить">✕</a>
+    <div class="review-progress"><span id="progress-fill"></span></div>
+    <span class="review-count" id="count"></span>
+    <select id="direction" aria-label="Направление">
+      <option value="forward">Слово → перевод</option>
+      <option value="reverse">Перевод → слово</option>
+      <option value="mixed">Вперемешку</option>
+    </select>
+  </div>
+
+  <div class="stack" id="stack">
+    <div class="flashcard" id="card" tabindex="0">
+      <div class="swipe-label left">Не знаю</div>
+      <div class="swipe-label right">Знаю</div>
+      <div class="card-badge" id="badge" hidden></div>
+      <div class="face front" id="front"></div>
+      <div class="face back" id="back" hidden></div>
+      <div class="card-hint" id="hint">Нажмите, чтобы проверить себя · пробел</div>
+    </div>
+  </div>
+
+  <div class="answer-row">
+    <button class="answer wrong" id="btn-wrong" disabled><span>←</span> Не знаю</button>
+    <button class="answer speak icon-btn" id="btn-speak" title="Произнести">🔊</button>
+    <button class="answer right" id="btn-right" disabled>Знаю <span>→</span></button>
+  </div>
+
+  <div class="review-done card" id="done" hidden>
+    <h2 id="done-title"></h2>
+    <p id="done-text"></p>
+    <ul class="done-words" id="done-words"></ul>
+    <div class="actions">
+      <a class="btn btn-primary" href="{% url 'vocab:review' %}?mode=practice">Ещё раз — случайные слова</a>
+      <a class="btn" href="{% url 'vocab:list' %}">К словарику</a>
+    </div>
+  </div>
+</div>
+{{ cards|json_script:"cards-data" }}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/review.js' %}"></script>{% endblock %}

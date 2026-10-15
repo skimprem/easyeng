@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ card.word }}{% endblock %}
+{% block main_class %}page narrow{% endblock %}
+{% block content %}
+<h1>{{ card.word }}</h1>
+<div class="card">
+  <form method="post">{% csrf_token %}
+    {% include "_form.html" %}
+    <button class="btn btn-primary">Сохранить</button>
+    <a class="btn btn-ghost" href="{% url 'vocab:list' %}">Отмена</a>
+  </form>
+</div>
+<p class="muted">Уровень {{ card.box }} · повторений {{ card.reviews }} · следующее повторение {{ card.due|date:"j E Y, H:i" }}</p>
+{% endblock %}

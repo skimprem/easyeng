@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Вход{% endblock %}
+{% block main_class %}page narrow{% endblock %}
+{% block content %}
+<div class="card auth">
+  <h1>Вход</h1>
+  <p class="muted">Читайте на иностранном языке — перевод по двойному клику.</p>
+  <form method="post">{% csrf_token %}
+    {% include "_form.html" %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="btn btn-primary wide">Войти</button>
+  </form>
+  <p class="muted center">Нет аккаунта? <a href="{% url 'accounts:signup' %}">Зарегистрируйтесь</a></p>
+</div>
+{% endblock %}

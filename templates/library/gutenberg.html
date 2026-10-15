@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Project Gutenberg{% endblock %}
+{% block content %}
+<h1>Project Gutenberg</h1>
+<p class="muted">Более 70 000 книг в общественном достоянии — бесплатно и легально.</p>
+<form class="search-row" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Название или автор, например: Sherlock Holmes" autofocus>
+  <select name="lang">{% for code, name in languages %}<option value="{{ code }}"{% if code == lang %} selected{% endif %}>{{ name }}</option>{% endfor %}</select>
+  <button class="btn btn-primary">Найти</button>
+</form>
+{% if error %}<div class="msg msg-error">{{ error }}</div>{% endif %}
+<details class="byid"{% if error %} open{% endif %}>
+  <summary>Уже знаете номер книги или ссылку?</summary>
+  <form class="search-row" method="post" action="{% url 'library:gutenberg_import' %}" data-busy="Загружаю…">{% csrf_token %}
+    <input type="text" name="book_id" placeholder="1661 или https://www.gutenberg.org/ebooks/1661" required>
+    <button class="btn">Добавить</button>
+  </form>
+</details>
+{% if result %}
+  <p class="muted">Найдено: {{ result.count }}</p>
+  <ul class="results">
+  {% for b in result.books %}
+    <li class="result">
+      <div>
+        <div class="book-title">{{ b.title }}</div>
+        <div class="book-author">{{ b.authors|default:"Автор неизвестен" }}</div>
+        <div class="book-meta">{{ b.languages|join:", "|upper }} · {{ b.downloads }} скачиваний · <a href="https://www.gutenberg.org/ebooks/{{ b.id }}" target="_blank" rel="noopener">на сайте</a></div>
+      </div>
+      <form method="post" action="{% url 'library:gutenberg_import' %}" data-busy="Загружаю…">{% csrf_token %}
+        <input type="hidden" name="book_id" value="{{ b.id }}">
+        <button class="btn">В библиотеку</button>
+      </form>
+    </li>
+  {% empty %}<li class="muted">Ничего не найдено.</li>{% endfor %}
+  </ul>
+  <div class="pager">
+    {% if page > 1 %}<a class="btn btn-ghost" href="?q={{ q|urlencode }}&lang={{ lang }}&page={{ page|add:-1 }}">← Назад</a>{% endif %}
+    {% if result.has_next %}<a class="btn btn-ghost" href="?q={{ q|urlencode }}&lang={{ lang }}&page={{ page|add:1 }}">Дальше →</a>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

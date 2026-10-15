@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}FreeDict{% endblock %}
+{% block main_class %}page narrow{% endblock %}
+{% block content %}
+<h1>Каталог FreeDict</h1>
+<p class="muted">Открытые двуязычные словари (GPL / CC BY-SA). Устанавливаются как общие — для всех пользователей. Установка крупного словаря занимает до минуты.</p>
+<ul class="results compact">
+{% for i in items %}
+  <li class="result">
+    <div><b>{{ i.name }}</b> <span class="muted">{{ i.src|upper }}→{{ i.tgt|upper }} · {{ i.headwords }} слов · v{{ i.version }}</span></div>
+    {% if i.installed %}<span class="muted">установлен</span>{% else %}
+    <form method="post" data-busy="Устанавливаю…">{% csrf_token %}<input type="hidden" name="name" value="{{ i.name }}"><button class="btn">Установить</button></form>
+    {% endif %}
+  </li>
+{% endfor %}
+</ul>
+{% endblock %}

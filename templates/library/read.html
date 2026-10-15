@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ text.title }}{% endblock %}
+{% block body_class %}reading{% endblock %}
+{% block main_class %}reader-wrap{% endblock %}
+{% block content %}
+<div class="reader-bar" id="reader-bar">
+  <a class="icon-btn" href="{% url 'library:list' %}" title="В библиотеку">←</a>
+  <span class="reader-title">{{ text.title }}</span>
+  <span class="langpair" title="Направление перевода">
+    <select id="src-lang" aria-label="С языка">{% for code, name in languages %}<option value="{{ code }}"{% if code == src %} selected{% endif %}>{{ code|upper }}</option>{% endfor %}</select>
+    →
+    <select id="tgt-lang" aria-label="На язык">{% for code, name in languages %}<option value="{{ code }}"{% if code == tgt %} selected{% endif %}>{{ code|upper }}</option>{% endfor %}</select>
+  </span>
+  <button class="icon-btn" data-font="-1" title="Меньше шрифт">A−</button>
+  <button class="icon-btn" data-font="1" title="Больше шрифт">A+</button>
+  <span class="save-status" id="save-status" aria-live="polite"></span>
+  <button class="icon-btn" id="reset-glosses" title="Сбросить закреплённые переводы" hidden>⟲ <span class="count"></span></button>
+  <button class="icon-btn" data-theme-cycle title="Тема: светлая / сепия / тёмная">◐</button>
+  <a class="icon-btn" href="{% url 'library:edit' text.pk %}" title="Редактировать">✎</a>
+</div>
+
+<article class="reader" id="reader"
+         data-lookup-url="{% url 'dictionary:lookup' %}"
+         data-progress-url="{% url 'library:progress' text.pk %}"
+         data-glosses-url="{% url 'library:glosses' text.pk %}"
+         data-vocab-url="{% url 'vocab:add' %}"
+         data-auto-add="{{ user.profile.auto_add_pinned|yesno:'1,0' }}"
+         data-progress="{{ text.progress }}"
+         data-text-id="{{ text.pk }}">
+  <header class="reader-head">
+    <h1>{{ text.title }}</h1>
+    {% if text.author %}<p class="reader-author">{{ text.author }}</p>{% endif %}
+  </header>
+  <div id="reader-content">{{ text.content_html|safe }}</div>
+  {% if not text.content_html %}<p class="muted">Текст пуст. <a href="{% url 'library:edit' text.pk %}">Добавить содержимое</a></p>{% endif %}
+  {% if text.source_url %}<p class="source muted"><a href="{{ text.source_url }}" rel="noopener" target="_blank">Источник</a></p>{% endif %}
+</article>
+
+<div class="hint" id="reader-hint">Двойной клик по слову — перевод. Выделите фразу — появится кнопка «Перевести».</div>
+
+<div class="popover" id="popover" hidden role="dialog" aria-live="polite">
+  <div class="pop-head">
+    <span class="pop-word"></span>
+    <span class="pop-actions">
+      <button type="button" class="icon-btn star" data-add title="В словарик (S)">☆</button>
+      <button type="button" class="icon-btn" data-pin title="Закрепить перевод над словом">📌</button>
+      <button type="button" class="icon-btn" data-close title="Закрыть (Esc)">✕</button>
+    </span>
+  </div>
+  <div class="pop-main"></div>
+  <details class="pop-more" hidden><summary>Подробнее</summary><div class="pop-details"></div></details>
+</div>
+<button type="button" class="chip" id="phrase-chip" hidden>Перевести</button>
+
+<dialog class="confirm" id="reset-dialog">
+  <form method="dialog">
+    <h2>Сбросить переводы?</h2>
+    <p>Все закреплённые над словами переводы в этом тексте (<b class="count"></b>) будут удалены. Отменить это действие нельзя.</p>
+    <div class="actions end">
+      <button class="btn btn-ghost" value="cancel" autofocus>Отмена</button>
+      <button class="btn btn-danger" value="reset">Сбросить</button>
+    </div>
+  </form>
+</dialog>
+{{ text.glosses|json_script:"glosses-data" }}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/reader.js' %}"></script>{% endblock %}

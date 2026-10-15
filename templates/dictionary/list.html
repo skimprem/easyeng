@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Словари{% endblock %}
+{% block main_class %}page narrow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Словари</h1>
+  {% if user.is_staff %}<a class="btn" href="{% url 'dictionary:freedict' %}">Каталог FreeDict</a>{% endif %}
+</div>
+<p class="muted">Онлайн-словари (MyMemory, Wiktionary) включаются в <a href="{% url 'accounts:settings' %}">настройках</a>. Локальные словари работают без интернета и проверяются первыми.</p>
+
+<ul class="results">
+{% for d in dictionaries %}
+  <li class="result{% if not d.enabled %} disabled{% endif %}">
+    <div>
+      <div class="book-title">{{ d.name }}</div>
+      <div class="book-meta"><span class="lang">{{ d.source_lang|upper }}→{{ d.target_lang|upper }}</span> {{ d.entry_count }} статей · {{ d.format }} · {% if d.is_shared %}общий{% else %}личный{% endif %}{% if not d.enabled %} · выключен{% endif %}</div>
+    </div>
+    {% if d.owner_id == user.id or d.is_shared and user.is_staff %}
+    <div class="actions">
+      <form method="post" action="{% url 'dictionary:toggle' d.pk %}">{% csrf_token %}<button class="btn btn-ghost">{% if d.enabled %}Выключить{% else %}Включить{% endif %}</button></form>
+      <form method="post" action="{% url 'dictionary:delete' d.pk %}" data-confirm="Удалить словарь «{{ d.name }}»?">{% csrf_token %}<button class="btn btn-ghost danger">Удалить</button></form>
+    </div>
+    {% endif %}
+  </li>
+{% empty %}
+  <li class="muted">Локальных словарей пока нет.{% if user.is_staff %} Установите открытый словарь из <a href="{% url 'dictionary:freedict' %}">каталога FreeDict</a>.{% endif %}</li>
+{% endfor %}
+</ul>
+
+<h2>Загрузить свой словарь</h2>
+<div class="card">
+  <form method="post" enctype="multipart/form-data" data-busy="Импортирую словарь…">{% csrf_token %}
+    {% include "_form.html" %}
+    <button class="btn btn-primary">Загрузить</button>
+  </form>
+</div>
+{% endblock %}
