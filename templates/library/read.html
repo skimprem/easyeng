@@ -12,12 +12,16 @@
     →
     <select id="tgt-lang" aria-label="На язык">{% for code, name in languages %}<option value="{{ code }}"{% if code == tgt %} selected{% endif %}>{{ code|upper }}</option>{% endfor %}</select>
   </span>
-  <button class="icon-btn" data-font="-1" title="Меньше шрифт">A−</button>
-  <button class="icon-btn" data-font="1" title="Больше шрифт">A+</button>
   <span class="save-status" id="save-status" aria-live="polite"></span>
   <button class="icon-btn" id="reset-glosses" title="Сбросить закреплённые переводы" hidden>⟲ <span class="count"></span></button>
-  <button class="icon-btn" data-theme-cycle title="Тема: светлая / сепия / тёмная">◐</button>
-  <a class="icon-btn" href="{% url 'library:edit' text.pk %}" title="Редактировать">✎</a>
+  <button class="icon-btn touch-only" id="phrase-mode" aria-pressed="false" title="Режим выделения фразы">⇔</button>
+  <button class="icon-btn touch-only" id="bar-more" aria-expanded="false" aria-controls="bar-extra" title="Шрифт, тема, правка">Aa</button>
+  <span class="bar-extra" id="bar-extra">
+    <button class="icon-btn" data-font="-1" title="Меньше шрифт">A−</button>
+    <button class="icon-btn" data-font="1" title="Больше шрифт">A+</button>
+    <button class="icon-btn" data-theme-cycle title="Тема: светлая / сепия / тёмная">◐</button>
+    <a class="icon-btn" href="{% url 'library:edit' text.pk %}" title="Редактировать">✎</a>
+  </span>
 </div>
 
 <article class="reader" id="reader"
@@ -37,7 +41,10 @@
   {% if text.source_url %}<p class="source muted"><a href="{{ text.source_url }}" rel="noopener" target="_blank">Источник</a></p>{% endif %}
 </article>
 
-<div class="hint" id="reader-hint">Двойной клик по слову — перевод. Выделите фразу — появится кнопка «Перевести».</div>
+<div class="hint" id="reader-hint">
+  <span class="mouse-only">Двойной клик по слову — перевод. Выделите фразу — появится кнопка «Перевести».</span>
+  <span class="touch-only">Коснитесь слова — перевод. Фраза: кнопка ⇔ вверху, затем выделите её.</span>
+</div>
 
 <div class="popover" id="popover" hidden role="dialog" aria-live="polite">
   <div class="pop-head">

@@ -413,3 +413,33 @@ dialog.confirm p { margin: 0 0 1.2rem; }
 .sort-buttons { display: flex; }
 .tag-online { font-size: .7rem; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 .3em; }
 @media (max-width: 760px) { .row-2 { grid-template-columns: 1fr; } }
+
+/* ---- Читалка на сенсорных экранах ---- */
+/* Подсветка слова, найденного тапом (без системного выделения) */
+::highlight(ee-lookup) { background-color: color-mix(in srgb, var(--accent) 28%, transparent); }
+.touch-only { display: none; }
+.icon-btn { white-space: nowrap; }
+#phrase-mode.active { background: var(--accent-soft); color: var(--accent); opacity: 1; }
+
+@media (pointer: coarse) {
+  .touch-only { display: revert; }
+  .mouse-only { display: none; }
+  /* Невыделяемый текст: Chrome не показывает поверх читалки «Перевести / Скопировать»
+     и «Touch to Search». В режиме фразы (кнопка ⇔) выделение снова включается. */
+  .reader, .reader-bar, .popover, .chip { -webkit-tap-highlight-color: transparent; }
+  #bar-more[aria-expanded="true"] { background: var(--accent-soft); color: var(--accent); opacity: 1; }
+  .hint { border-radius: 12px; width: max-content; max-width: calc(100vw - 2rem); }
+  #reader-content, .reader-head { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .reader.select-mode #reader-content { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
+
+  /* Шрифт, тема и правка — в выпадающей панели под «Aa» */
+  .bar-extra {
+    display: none; position: absolute; top: 100%; right: 0; z-index: 25;
+    padding: .3rem; gap: .2rem; background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .bar-extra.open { display: flex; }
+  .bar-extra .icon-btn { padding: .55rem .75rem; font-size: 1.05rem; }
+  .reader-bar .icon-btn { padding: .4rem .5rem; }
+  .reader-bar { gap: .1rem; }
+}

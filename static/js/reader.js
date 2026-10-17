@@ -135,6 +135,7 @@
     pop.hidden = true;
     current = null;
     requestSeq++;
+    unmark();
   }
 
   // ---------- Закреплённые над словами переводы ----------
@@ -438,24 +439,114 @@
     show(range, word);
   });
 
-  function hideChip() { chip.hidden = true; }
+  // ---------- Сенсорные экраны: перевод по тапу ----------
+  // Текст на телефоне невыделяемый (см. CSS): иначе Chrome показывает свои
+  // меню «Перевести / Скопировать» и «Touch to Search» поверх читалки.
+  // Слово под пальцем находим сами и подсвечиваем через CSS Highlight API,
+  // не создавая системного выделения.
+  const phraseBtn = document.getElementById("phrase-mode");
+  const WORD_CHAR = /[\p{L}\p{M}'’\-]/u;
+  let lastPointer = "mouse";
+  document.addEventListener("pointerdown", (e) => { lastPointer = e.pointerType; }, true);
+
+  function wordRangeAt(x, y) {
+    let node = null, offset = 0;
+    if (document.caretPositionFromPoint) {
+      const p = document.caretPositionFromPoint(x, y);
+      if (p) { node = p.offsetNode; offset = p.offset; }
+    } else if (document.caretRangeFromPoint) {
+      const r = document.caretRangeFromPoint(x, y);
+      if (r) { node = r.startContainer; offset = r.startOffset; }
+    }
+    if (!node || node.nodeType !== Node.TEXT_NODE || !content.contains(node) || node.parentElement.closest("rt")) return null;
+    const text = node.data;
+    let start = offset, end = offset;
+    while (start > 0 && WORD_CHAR.test(text[start - 1])) start--;
+    while (end < text.length && WORD_CHAR.test(text[end])) end++;
+    while (start < end && /['’\-]/.test(text[start])) start++;
+    while (end > start && /['’\-]/.test(text[end - 1])) end--;
+    if (start === end) return null;
+    const range = document.createRange();
+    range.setStart(node, start);
+    range.setEnd(node, end);
+    // Тап мимо слова (поле, конец строки) — каретка «прилипает» к ближайшему слову; такое не считаем
+    const rect = range.getBoundingClientRect(), slop = 6;
+    if (x < rect.left - slop || x > rect.right + slop || y < rect.top - slop || y > rect.bottom + slop) return null;
+    return range;
+  }
+
+  function mark(range) {
+    if (window.CSS && CSS.highlights && window.Highlight) CSS.highlights.set("ee-lookup", new Highlight(range));
+  }
+  function unmark() {
+    if (window.CSS && CSS.highlights) CSS.highlights.delete("ee-lookup");
+  }
+
+  reader.addEventListener("click", (e) => {
+    if (lastPointer !== "touch" || reader.classList.contains("select-mode")) return;
+    if (e.target.closest("ruby.gloss, a")) return;
+    const range = wordRangeAt(e.clientX, e.clientY);
+    if (!range) return hide();
+    const word = range.toString();
+    if (!WORD_RE.test(word) || word.length > 40) return;
+    show(range, word);
+    mark(range);
+  });
+
+  function setPhraseMode(on) {
+    reader.classList.toggle("select-mode", on);
+    phraseBtn.setAttribute("aria-pressed", on ? "true" : "false");
+    phraseBtn.classList.toggle("active", on);
+    if (!on) { window.getSelection().removeAllRanges(); hideChip(); }
+    setStatus(on ? "Выделите фразу" : "", on ? "" : "ok");
+  }
+  phraseBtn.addEventListener("click", () => setPhraseMode(!reader.classList.contains("select-mode")));
+
+  // Панель на телефоне: шрифт, тема и правка спрятаны под «Aa»
+  const moreBtn = document.getElementById("bar-more"), extra = document.getElementById("bar-extra");
+  moreBtn.addEventListener("click", () => {
+    const open = extra.classList.toggle("open");
+    moreBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  document.addEventListener("click", (e) => {
+    if (extra.classList.contains("open") && !extra.contains(e.target) && e.target !== moreBtn) {
+      extra.classList.remove("open");
+      moreBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  function hideChip() { chip.hidden = true; chipSelection = null; }
+
+  // Выделенная фраза запоминается при показе кнопки: на сенсорном экране
+  // тап по кнопке сбрасывает выделение раньше, чем приходит click
+  let chipSelection = null;
 
   document.addEventListener("selectionchange", () => {
     clearTimeout(document._chipTimer);
     document._chipTimer = setTimeout(() => {
       const s = selectionInReader();
-      if (!s || !/\s/.test(s.text) || s.text.length > 200 || s.text.split(" ").length > 12) return hideChip();
+      // На тач-экране выделение сбрасывается тапом по самой кнопке — тогда её не прячем
+      if (!s) { if (lastPointer !== "touch") hideChip(); return; }
+      if (!/\s/.test(s.text) || s.text.length > 200 || s.text.split(" ").length > 12) return hideChip();
+      chipSelection = { range: s.range.cloneRange(), text: s.text };
       const rect = s.range.getBoundingClientRect();
       chip.hidden = false;
       chip.style.left = rect.left + rect.width / 2 + window.scrollX + "px";
-      chip.style.top = rect.top + window.scrollY - chip.offsetHeight - 8 + "px";
+      // На телефоне над выделением рисует своё меню браузер — кнопку ставим под ним
+      chip.style.top = (lastPointer === "touch"
+        ? rect.bottom + window.scrollY + 12
+        : rect.top + window.scrollY - chip.offsetHeight - 8) + "px";
     }, 250);
   });
 
   chip.addEventListener("mousedown", (e) => e.preventDefault()); // не сбрасывать выделение
   chip.addEventListener("click", () => {
-    const s = selectionInReader();
-    if (s) show(s.range, s.text);
+    const s = selectionInReader() || chipSelection;
+    if (!s) return;
+    const range = s.range.cloneRange();
+    if (reader.classList.contains("select-mode")) setPhraseMode(false); // фраза выбрана — снова защищаем текст
+    show(range, s.text);
+    mark(range);
   });
 
   pop.addEventListener("click", (e) => {
