@@ -292,6 +292,10 @@ dialog.confirm p { margin: 0 0 1.2rem; }
 @media (max-width: 760px) {
   .topbar { gap: .8rem; flex-wrap: wrap; }
   .nav { gap: .8rem; font-size: .9rem; }
+  /* Меню шапки раскрываются на всю ширину шапки — иначе уходят за край экрана */
+  .nav .menu { position: static; }
+  .nav .menu-body { left: 1rem; right: 1rem; top: calc(100% + .25rem); min-width: 0; }
+  .nav .menu-body a, .nav .menu-body .linklike { padding: .7rem .8rem; }
   :root { --read-size: 18px; }
   .reader-title { display: none; }
   .editor-tabs { display: flex; }
